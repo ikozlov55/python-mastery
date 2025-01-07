@@ -173,3 +173,4 @@ cython_debug/
 # Random
 .DS_Store
 .idea
+test.py
