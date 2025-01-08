@@ -89,8 +89,7 @@ class Stock:
         return isinstance(other, self.__class__) and ((self.name, self.shares, self.price) ==
                                                       (other.name, other.shares, other.price))
 
-
-if __name__ == '__main__':
-    s = Stock('GOOG', 100, 490.10)
-    s.price = 10.0
-    print(s)
+    def __setattr__(self, name, value):
+        if name not in {'name', 'shares', 'price'}:
+            raise AttributeError('No attribute %s' % name)
+        super().__setattr__(name, value)
