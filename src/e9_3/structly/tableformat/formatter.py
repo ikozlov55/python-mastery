@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
-
-from src.e3_1.stock import read_portfolio
 
 
 class TableFormatter(ABC):
@@ -27,35 +24,6 @@ class UpperHeadersMixin:
         super().headings([h.upper() for h in headers])
 
 
-class TextTableFormatter(TableFormatter):
-    def headings(self, headers):
-        print(' '.join('%10s' % h for h in headers))
-        print(('-' * 10 + ' ') * len(headers))
-
-    def row(self, rowdata):
-        print(' '.join('%10s' % d for d in rowdata))
-
-
-class PortfolioFormatter(ColumnFormatMixin, UpperHeadersMixin, TextTableFormatter):
-    formats = ['%s', '%d', '%0.2f']
-
-
-class CSVTableFormatter(TableFormatter):
-    def headings(self, headers):
-        print(','.join(headers))
-
-    def row(self, rowdata):
-        print(','.join(map(str, rowdata)))
-
-
-class HTMLTableFormatter(TableFormatter):
-    def headings(self, headers):
-        print(' '.join(['<tr>', *(f'<th>{h}</th>' for h in headers), '</tr>']))
-
-    def row(self, rowdata):
-        print(' '.join(['<tr>', *(f'<td>{r}</td>' for r in rowdata), '</tr>']))
-
-
 def print_table(records, fields, formatter):
     if not isinstance(formatter, TableFormatter):
         raise TypeError('Expected TableFormatter!')
@@ -63,6 +31,11 @@ def print_table(records, fields, formatter):
     for r in records:
         rowdata = [getattr(r, fieldname) for fieldname in fields]
         formatter.row(rowdata)
+
+
+from .formats.csv import CSVTableFormatter
+from .formats.html import HTMLTableFormatter
+from .formats.text import TextTableFormatter
 
 
 def create_formatter(format, column_formats=None, upper_headers=False):
@@ -83,28 +56,10 @@ def create_formatter(format, column_formats=None, upper_headers=False):
     if mixins:
         class CustomTableFormatter(*mixins, base.__class__):
             pass
+
         base = CustomTableFormatter()
         base.formats = column_formats
     return base
 
 
-if __name__ == '__main__':
-    path = Path(__file__).parent / '../..' / 'Data/portfolio.csv'
-    portfolio = read_portfolio(path)
-    print_table(
-        portfolio,
-        ['name', 'shares', 'price'],
-        create_formatter('text')
-    )
-    print()
-    print_table(
-        portfolio,
-        ['name', 'shares', 'price'],
-        create_formatter('csv', upper_headers=True)
-    )
-    print()
-    print_table(
-        portfolio,
-        ['name', 'shares', 'price'],
-        create_formatter('html', column_formats=['"%s"', '%d', '%0.2f'], upper_headers=True)
-    )
+__all__ = ['create_formatter', 'print_table']

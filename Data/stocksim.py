@@ -31,7 +31,7 @@ def minutes(tm):
        hour += 12
     return hour*60 + minute
 
-# Convert time in minutes to a format string
+# Convert time in minutes to a formats string
 def minutes_to_str(m):
     frac,m = math.modf(m)
     hours = m//60

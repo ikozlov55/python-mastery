@@ -1,7 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
-
-from src.e3_1.stock import read_portfolio
 
 
 class TableFormatter(ABC):
@@ -14,6 +11,19 @@ class TableFormatter(ABC):
         raise NotImplementedError()
 
 
+class ColumnFormatMixin:
+    formats = []
+
+    def row(self, rowdata):
+        rowdata = [(fmt % d) for fmt, d in zip(self.formats, rowdata)]
+        super().row(rowdata)
+
+
+class UpperHeadersMixin:
+    def headings(self, headers):
+        super().headings([h.upper() for h in headers])
+
+
 class TextTableFormatter(TableFormatter):
     def headings(self, headers):
         print(' '.join('%10s' % h for h in headers))
@@ -21,6 +31,10 @@ class TextTableFormatter(TableFormatter):
 
     def row(self, rowdata):
         print(' '.join('%10s' % d for d in rowdata))
+
+
+class PortfolioFormatter(ColumnFormatMixin, UpperHeadersMixin, TextTableFormatter):
+    formats = ['%s', '%d', '%0.2f']
 
 
 class CSVTableFormatter(TableFormatter):
@@ -48,23 +62,25 @@ def print_table(records, fields, formatter):
         formatter.row(rowdata)
 
 
-def create_formatter(format):
+def create_formatter(format, column_formats=None, upper_headers=False):
     match format:
         case 'text':
-            return TextTableFormatter()
+            base = TextTableFormatter()
         case 'csv':
-            return CSVTableFormatter()
+            base = CSVTableFormatter()
         case 'html':
-            return HTMLTableFormatter()
+            base = HTMLTableFormatter()
         case _:
             raise AttributeError('Unknown formats!')
+    mixins = []
+    if column_formats:
+        mixins.append(ColumnFormatMixin)
+    if upper_headers:
+        mixins.append(UpperHeadersMixin)
+    if mixins:
+        class CustomTableFormatter(*mixins, base.__class__):
+            pass
 
-
-if __name__ == '__main__':
-    path = Path(__file__).parent / '../..' / 'Data/portfolio.csv'
-    portfolio = read_portfolio(path)
-    print_table(portfolio, ['name', 'shares', 'price'], create_formatter('text'))
-    print()
-    print_table(portfolio, ['name', 'shares', 'price'], create_formatter('csv'))
-    print()
-    print_table(portfolio, ['name', 'shares', 'price'], create_formatter('html'))
+        base = CustomTableFormatter()
+        base.formats = column_formats
+    return base

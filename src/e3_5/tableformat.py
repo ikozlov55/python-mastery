@@ -52,7 +52,7 @@ def create_formatter(format):
         case 'html':
             return HTMLTableFormatter()
         case _:
-            raise AttributeError('Unknown format!')
+            raise AttributeError('Unknown formats!')
 
 if __name__ == '__main__':
     path = Path(__file__).parent / '../..' / 'Data/portfolio.csv'
